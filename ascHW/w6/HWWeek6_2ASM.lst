@@ -1,0 +1,122 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start        
+     4                                  
+     5                                  extern exit, scanf, printf
+     6                                  import exit msvcrt.dll
+     7                                  import scanf msvcrt.dll
+     8                                  import printf msvcrt.dll
+     9                                  
+    10                                  segment data use32 class=data
+    11 00000000 00                          a db 0
+    12 00000001 00000000                    aa dd 0
+    13 00000005 00                          b db 0
+    14 00000006 000000000000000000-         bb dd 0, 0, 0
+    14 0000000F 000000             
+    15 00000012 61203D2000                  messageA db "a = ", 0
+    16 00000017 62203D2000                  messageB db "b = ", 0
+    17 0000001C 0A0D00                      messageN db 10, 13, 0
+    18 0000001F 6800                        messageH db "h", 0
+    19 00000021 20646563696D616C00          messageD db " decimal", 0
+    20 0000002A 256400                      formatD db "%d", 0 ; signed decimal
+    21 0000002D 257800                      formatX db "%x", 0 ; unsigned hexa
+    22 00000030 257300                      formatS db "%s", 0 ; string
+    23                                      
+    24                                  segment code use32 class=code
+    25                                      start:
+    26                                      ;A part
+    27                                          ;print "a = "
+    28 00000000 68[12000000]                    push dword messageA
+    29 00000005 68[30000000]                    push dword formatS
+    30 0000000A FF15[00000000]                  call [printf]
+    31 00000010 83C408                          add ESP, 4*2
+    32                                          
+    33                                          ;read A as SIGNED DECIMAL
+    34 00000013 68[00000000]                    push dword a
+    35 00000018 68[2A000000]                    push dword formatD
+    36 0000001D FF15[00000000]                  call [scanf]
+    37 00000023 83C408                          add ESP, 4*2
+    38                                          
+    39 00000026 A0[00000000]                    mov AL, [a]
+    40 0000002B 6698                            cbw
+    41 0000002D 98                              cwde
+    42 0000002E A3[01000000]                    mov [aa], EAX
+    43                                          
+    44                                          ;print "a = "
+    45 00000033 68[12000000]                    push dword messageA
+    46 00000038 68[30000000]                    push dword formatS
+    47 0000003D FF15[00000000]                  call [printf]
+    48 00000043 83C408                          add ESP, 4*2
+    49                                          
+    50                                          ;printing the result as HEXA
+    51 00000046 FF35[01000000]                  push dword [aa]
+    52 0000004C 68[2D000000]                    push dword formatX
+    53 00000051 FF15[00000000]                  call [printf]
+    54 00000057 83C408                          add ESP, 4*2
+    55                                          
+    56                                          ;print h
+    57 0000005A 68[1F000000]                    push dword messageH
+    58 0000005F 68[30000000]                    push dword formatS
+    59 00000064 FF15[00000000]                  call [printf]
+    60 0000006A 83C408                          add ESP, 4*2
+    61                                          
+    62                                          ;print newline
+    63 0000006D 68[1C000000]                    push dword messageN
+    64 00000072 68[30000000]                    push dword formatS
+    65 00000077 FF15[00000000]                  call [printf]
+    66 0000007D 83C408                          add ESP, 4*2
+    67                                          
+    68                                      ;B part
+    69                                          
+    70                                          ;print "b = "
+    71 00000080 68[17000000]                    push dword messageB
+    72 00000085 68[30000000]                    push dword formatS
+    73 0000008A FF15[00000000]                  call [printf]
+    74 00000090 83C408                          add ESP, 4*2
+    75                                          
+    76                                          ;read B as HEXA
+    77 00000093 68[05000000]                    push dword b
+    78 00000098 68[2D000000]                    push dword formatX
+    79 0000009D FF15[00000000]                  call [scanf]
+    80 000000A3 83C408                          add ESP, 4*2
+    81                                          
+    82 000000A6 A0[05000000]                    mov AL, [b]
+    83 000000AB 6698                            cbw
+    84 000000AD 98                              cwde
+    85 000000AE A3[06000000]                    mov [bb], EAX
+    86                                          
+    87                                          ;print "b = "
+    88 000000B3 68[17000000]                    push dword messageB
+    89 000000B8 68[30000000]                    push dword formatS
+    90 000000BD FF15[00000000]                  call [printf]
+    91 000000C3 83C408                          add ESP, 4*2
+    92                                          
+    93                                          ;printing the result as DECIMAL
+    94 000000C6 FF35[06000000]                  push dword [bb]
+    95 000000CC 68[2A000000]                    push dword formatD
+    96 000000D1 FF15[00000000]                  call [printf]
+    97 000000D7 83C408                          add ESP, 4*2
+    98                                          
+    99                                          ;print newline
+   100 000000DA 68[1C000000]                    push dword messageN
+   101 000000DF 68[30000000]                    push dword formatS
+   102 000000E4 FF15[00000000]                  call [printf]
+   103 000000EA 83C408                          add ESP, 4*2
+   104                                          
+   105 000000ED A1[01000000]                    mov EAX, [aa]
+   106 000000F2 0305[06000000]                  add EAX, [bb]
+   107                                  
+   108                                          ;printing A+B as decimal
+   109 000000F8 50                              push dword EAX
+   110 000000F9 68[2A000000]                    push dword formatD
+   111 000000FE FF15[00000000]                  call [printf]
+   112 00000104 83C408                          add ESP, 4*2
+   113                                          
+   114                                          ;print d
+   115 00000107 68[21000000]                    push dword messageD
+   116 0000010C 68[30000000]                    push dword formatS
+   117 00000111 FF15[00000000]                  call [printf]
+   118 00000117 83C408                          add ESP, 4*2
+   119                                          
+   120 0000011A 6A00                            push dword 0
+   121 0000011C FF15[00000000]                  call [exit]

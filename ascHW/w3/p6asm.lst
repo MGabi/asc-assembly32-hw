@@ -1,0 +1,103 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start        
+     4                                  
+     5                                  extern exit
+     6                                  import exit msvcrt.dll
+     7                                  
+     8                                  segment data use32 class=data
+     9                                      
+    10 00000000 05                          a db 5
+    11 00000001 0300                        b dw 3
+    12 00000003 06000000                    c dd 6
+    13 00000007 0400000000000000            d dq 4
+    14                                      
+    15                                  segment code use32 class=code
+    16                                      start:
+    17                                          ;(a+b-d)+(a-b-d) = 2 = 2h
+    18                                          ;4 + (-2)
+    19                                          ;unsigned
+    20                                          ; mov AL, [a];        AL = 5 = 5h (a)
+    21                                          ; mov AH, 0;          AH = 0 = 0h, AX = 5 = 5h
+    22                                          ; add AX, [b];        AX = 8 = 8h (a+b)
+    23                                          ; mov DX, 0;          DX = 0 = 0h
+    24                                          ; push DX ;           DX = 0 = 0h
+    25                                          ; push AX ;           AX = 8 = 8h
+    26                                          ; pop EAX ;           EAX = 8 = 8h
+    27                                          ; mov EDX, 0 ;        EDX = 0 = 0h
+    28                                          ; ;                   EDX:EAX = 8 = 8h
+    29                                          ; ;                   ECX:EBX will be [d]
+    30                                          ; mov EBX, dword[d] ; EBX = 4 = 4h
+    31                                          ; mov ECX, [d+4] ;    ECX = 0 = 0h
+    32                                          ; sub EAX, EBX ;      EAX = 4 = 4h
+    33                                          ; sbb EDX, ECX ;      EDX = 0 = 0h
+    34                                          ; ;                   EDX:EAX = (a+b-d) = 4 = 4h
+    35                                          ; mov ECX, 0 ;        ECX = 0 = 0h
+    36                                          ; mov EBX, 0 ;        EBX = 0 = 0h
+    37                                          ; mov BL, [a] ;       BL = 5 = 5h
+    38                                          ; ;                   EDX:EAX = 4 = 4h
+    39                                          ; ;                   ECX:EBX = 5 = 5h
+    40                                          ; add EAX, EBX ;      EAX = 9 = 9h
+    41                                          ; adc EDX, ECX ;      EDX = 0 = 0h
+    42                                          ; mov EBX, 0 ;        EBX = 0 = 0h
+    43                                          ; mov ECX, 0 ;        ECX = 0 = 0h
+    44                                          ; mov BX, [b] ;       BX = 3 = 3h
+    45                                          ; sub EAX, EBX ;      EAX = 6 = 6h
+    46                                          ; sbb EDX, ECX ;      EDX = 0 = 0h
+    47                                          ; mov EBX, 0 ;        EBX = 0 = 0h
+    48                                          ; mov ECX, 0 ;        ECX = 0 = 0h
+    49                                          ; mov EBX, dword[d] ; EBX = 4 = 4h
+    50                                          ; mov ECX, [d+4] ;    ECX = 0 = 0h
+    51                                          ; sub EAX, EBX ;      EAX = 2 = 2h
+    52                                          ; sbb EDX, ECX ;      EDX = 0 = 0h
+    53                                          
+    54                                          ;resetting them
+    55 00000000 B800000000                      mov EAX, 0
+    56 00000005 BB00000000                      mov EBX, 0
+    57 0000000A B900000000                      mov ECX, 0
+    58 0000000F BA00000000                      mov EDX, 0
+    59                                          
+    60                                          ;signed
+    61 00000014 A0[00000000]                    mov AL, [a];        AL = 5 = 5h (a)
+    62 00000019 6698                            cbw;                AX = 5 = 5h
+    63 0000001B 660305[01000000]                add AX, [b];        AX = 8 = 8h (a+b)
+    64 00000022 6699                            cwd;                DX:AX = 8
+    65 00000024 6652                            push DX ;           DX = 0 = 0h
+    66 00000026 6650                            push AX ;           AX = 8 = 8h
+    67 00000028 58                              pop EAX ;           EAX = 8 = 8h
+    68 00000029 BA00000000                      mov EDX, 0 ;        EDX = 0 = 0h
+    69                                          ;                   EDX:EAX = 8 = 8h
+    70                                          ;                   ECX:EBX will be [d]
+    71 0000002E 8B1D[07000000]                  mov EBX, dword[d] ; EBX = 4 = 4h
+    72 00000034 8B0D[0B000000]                  mov ECX, [d+4] ;    ECX = 0 = 0h
+    73 0000003A 29D8                            sub EAX, EBX ;      EAX = 4 = 4h
+    74 0000003C 19CA                            sbb EDX, ECX ;      EDX = 0 = 0h
+    75                                          ;                   EDX:EAX = (a+b-d) = 4 = 4h
+    76 0000003E B900000000                      mov ECX, 0 ;        ECX = 0 = 0h
+    77 00000043 BB00000000                      mov EBX, 0 ;        EBX = 0 = 0h
+    78 00000048 52                              push EDX
+    79 00000049 50                              push EAX
+    80 0000004A BA00000000                      mov EDX, 0
+    81 0000004F B800000000                      mov EAX, 0
+    82                                          ;                   (a+b-d)+(a-b-d) = 2 = 2h
+    83                                          ;                   on the stack, EDX:EAX is the first paranthesis
+    84 00000054 A0[00000000]                    mov AL, [a];        AL = 5 = 5h
+    85 00000059 6698                            cbw;                AX = 5 = 5h
+    86 0000005B 662B05[01000000]                sub AX, [b];        AX = 2 = 2h   
+    87 00000062 98                              cwde;               EAX = 2 = 2h
+    88 00000063 99                              cdq
+    89                                          ;                   EDX = 0 = 0h
+    90 00000064 8B1D[07000000]                  mov EBX, dword[d] ; EBX = 4 = 4h
+    91 0000006A 8B0D[0B000000]                  mov ECX, [d+4] ;    ECX = 0 = 0h
+    92 00000070 29D8                            sub EAX, EBX;       EAX = -2
+    93 00000072 19CA                            sbb EDX, ECX;       EDX = 0
+    94 00000074 5B                              pop EBX
+    95 00000075 59                              pop ECX
+    96 00000076 01C3                            add EBX, EAX
+    97 00000078 11D1                            adc ECX, EDX;       ECX:EBX = 2 = 2h
+    98                                                      
+    99                                          
+   100                                          
+   101                                          
+   102                                          
+   103                                          

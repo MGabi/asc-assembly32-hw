@@ -1,0 +1,68 @@
+     1                                  ;Se dau un nume de fisier si un text (definite in segmentul de date).
+     2                                  ;Textul contine litere mici, litere mari, cifre si caractere speciale.
+     3                                  ;Sa se transforme toate literele mari din textul dat in litere mici.
+     4                                  ;Sa se creeze un fisier cu numele dat si sa se scrie textul obtinut in fisier.
+     5                                  
+     6                                  bits 32
+     7                                  
+     8                                  global start        
+     9                                  
+    10                                  extern exit, fopen, fprintf, fclose
+    11                                  import exit msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  import fprintf msvcrt.dll
+    14                                  import fclose msvcrt.dll
+    15                                  
+    16                                  segment data use32 class=data
+    17 00000000 6669736965722E7478-         fisier db "fisier.txt", 0
+    17 00000009 7400               
+    18 0000000B 7700                        access db "w", 0
+    19 0000000D FFFFFFFF                    file_descriptor dd -1
+    20 00000011 73614941313264392A-         sir db "saIA12d9*$#deanWFNI", 0
+    20 0000001A 24236465616E57464E-
+    20 00000023 4900               
+    21                                      len equ $-sir
+    22                                      
+    23                                  segment code use32 class=code
+    24                                      start:
+    25 00000000 B914000000                      mov ecx, len
+    26 00000005 BE00000000                      mov esi, 0
+    27                                          parcurgeSir:;going through the string
+    28 0000000A 80BE[11000000]41                    cmp byte [sir+esi], 65;checking if it's higher than 65 (ascii code)
+    29 00000011 7D02                                jge greater
+    30 00000013 EB19                                jmp notGreater
+    31                                              greater:
+    32 00000015 80BE[11000000]5A                        cmp byte [sir+esi], 90;checking if it's lower than 90(end of upper alphabet
+    33 0000001C 7E02                                    jle isBigCharacter
+    34 0000001E EB0E                                    jmp notGreater
+    35                                              isBigCharacter:;translating to lower case if it's upper
+    36 00000020 8A86[11000000]                          mov al, [sir+esi]
+    37 00000026 0420                                    add al, 32
+    38 00000028 8886[11000000]                          mov [sir+esi], al
+    39                                              notGreater:
+    40 0000002E 46                                      inc esi
+    41 0000002F E2D9                            loop parcurgeSir
+    42                                          
+    43                                  		
+    44                                  		;printing to file
+    45 00000031 68[0B000000]                    push dword access
+    46 00000036 68[00000000]                    push dword fisier
+    47 0000003B FF15[00000000]                  call [fopen]
+    48 00000041 83C408                          add esp, 4*2
+    49                                          
+    50 00000044 A3[0D000000]                    mov [file_descriptor], eax
+    51 00000049 83F800                          cmp eax, 0
+    52 0000004C 7423                            je final
+    53                                          
+    54 0000004E 68[11000000]                    push dword sir
+    55 00000053 FF35[0D000000]                  push dword [file_descriptor]
+    56 00000059 FF15[00000000]                  call [fprintf]
+    57 0000005F 83C408                          add esp, 4*2
+    58                                          
+    59 00000062 FF35[0D000000]                  push dword [file_descriptor]
+    60 00000068 FF15[00000000]                  call [fclose]
+    61 0000006E 83C404                          add esp, 4
+    62                                          
+    63                                          final:
+    64 00000071 6A00                                push dword 0
+    65 00000073 FF15[00000000]                      call [exit]

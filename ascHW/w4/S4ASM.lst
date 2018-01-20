@@ -1,0 +1,66 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start        
+     4                                  
+     5                                  extern exit
+     6                                  import exit msvcrt.dll
+     7                                  
+     8                                  segment data use32 class=data
+     9 00000000 352D                        a dw 0010110100110101b
+    10 00000002 0000                        b dw 0000000000000000b
+    11 00000004 00000000                    c dd 00000000000000000000000000000000b
+    12 00000008 00                          bb db 00000000b
+    13                                      
+    14                                  segment code use32 class=code
+    15                                      start:
+    16                                          ;A- word
+    17                                          ;sa se obtina nr intreg reprezentat de bitii 0-2 ai lui A
+    18                                          
+    19                                          ;sa se obtina in B cuvantul rezultat prin rotirea spre dreapta
+    20                                          ;fara carry a bitilor lui A cu `n` pozitii.
+    21                                          
+    22                                          ;sa se obtina dublucuvantul C: bitii 8-15 ai lui C sunt 0
+    23                                          ;bitii 16-23 ai lui C coincid cu bitii 7-14 ai lui A
+    24                                          ;24-31 ai lui C coincid cu bitii 7-14 ai lui A
+    25                                          ;bitii 0-7 ai lui C sunt 1
+    26                                          ;      
+    27                                          ;EAX = 00000000000000000000000011111111b
+    28 00000000 66B90700                        mov CX, 0000000000000111b
+    29 00000004 668B1D[00000000]                mov BX, word[a] ; BX = 0000000000110101b
+    30 0000000B 6621CB                          and BX, CX;       BX = 0000000000000101b - numarul format din bitii 0-2 ai lui A-
+    31                                          
+    32 0000000E 668B0D[00000000]                mov CX, [a];  CX    = 0010110100110101b
+    33 00000015 66890D[02000000]                mov [b], CX; [b]    = 0010110100110101b
+    34 0000001C 66C12D[02000000]03              shr word[b], 3;  [b]    = 0000010110100110b - in B este valoarea bitilor lui A shiftati spre dreapta cu 3 biti
+    35                                          
+    36                                          ;bitii 7-14 ai lui A sunt : 01011010
+    37 00000024 B800000000                      mov EAX, 0; EAX = 00000000000000000000000000000000b, in EAX se construieste C
+    38                                          
+    39                                          ;bitii 8-15 ai lui C sunt 0
+    40 00000029 80E400                          and AH, 00000000b
+    41                                          
+    42                                          ;bitii 16-23 ai lui C sunt bitii 7-14 ai lui A
+    43 0000002C B900000000                      mov ECX, 0
+    44 00000031 668B0D[00000000]                mov CX, [a]
+    45 00000038 6681E1807F                      and CX, 0111111110000000b; ECX = 00000000000000000010110100000000
+    46 0000003D C1E109                          shl ECX, 9 ;               ECX = 00000000010110100000000000000000
+    47 00000040 09C8                            or EAX, ECX;               EAX = 00000000010110100000000000000000
+    48                                          
+    49                                          ;next: bitii 24-31 ai lui C coincid cu bitii 7-14 ai lui A
+    50 00000042 C1E108                          shl ECX, 8 ;               ECX = 01011010000000000000000000000000
+    51 00000045 09C8                            or EAX, ECX ;              EAX = 01011010010110100000000000000000
+    52 00000047 B0FF                            mov AL, 11111111b ;        EAX = 01011010010110100000000011111111
+    53                                          
+    54                                          
+    55                                          
+    56 00000049 B800000000                      mov EAX, 0
+    57 0000004E B900000000                      mov ECX, 0
+    58                                          ;problema 10.
+    59                                          ;sa se inlocuiasca bitii 0-3 ai octetului B cu bitii 8-11 a cuvantului A
+    60 00000053 668B0D[00000000]                mov CX, [a]
+    61 0000005A 6681E1000F                      and CX, 0000111100000000b
+    62 0000005F 66C1E908                        shr CX, 8
+    63 00000063 6609C8                          or AX, CX; in CX este rezultatul
+    64                                          
+    65 00000066 6A00                            push dword 0
+    66 00000068 FF15[00000000]                  call [exit]

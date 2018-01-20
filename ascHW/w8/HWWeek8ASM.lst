@@ -1,0 +1,116 @@
+     1                                  ;Se dau doua siruri de octeti. Sa se parcurga cel mai scurt sir dintre cele doua siruri si sa se construiasca un al treilea sir
+     2                                  ;care va contine cel mai mare element de acelasi rang din cele doua siruri, iar pana la lungimea celui mai lung sir,
+     3                                  ;sirul al treilea se va completa alternativ cu valoarea 1 respectiv 0.
+     4                                  
+     5                                  bits 32
+     6                                  
+     7                                  
+     8                                  global start        
+     9                                      
+    10                                  extern exit, printf           
+    11                                  import exit msvcrt.dll
+    12                                  import printf msvcrt.dll
+    13                                  
+    14                                  segment data use32 class=data
+    15 00000000 01020304050607              s1 db 1, 2, 3, 4, 5, 6, 7
+    16                                      l1 equ $ - s1
+    17 00000007 00030509                    s2 db 0, 3, 5, 9
+    18                                      l2 equ $ - s2
+    19 0000000B 25640A0D                    fmt db "%d", 10, 13
+    20                                  
+    21                                  segment code use32 class=code
+    22                                      start:
+    23 00000000 66B80400                    mov AX, l2
+    24 00000004 66BB0700                    mov BX, l1
+    25 00000008 6639D8                      cmp AX, BX
+    26 0000000B BA00000000                  mov EDX, 0
+    27 00000010 7D1A                        jge put_l2
+    28 00000012 7E00                        jng put_l1
+    29                                      
+    30                                      ;setting up things if l1 > l2
+    31                                      put_l1:
+    32 00000014 B904000000                      mov ECX, l2
+    33 00000019 BE[07000000]                    mov ESI, s2
+    34 0000001E BF[00000000]                    mov EDI, s1
+    35 00000023 89CB                            mov EBX, ECX
+    36 00000025 B807000000                      mov EAX, l1
+    37 0000002A EB16                            jmp repeta
+    38                                          
+    39                                      ;else
+    40                                      put_l2:
+    41 0000002C B907000000                      mov ECX, l1
+    42 00000031 BE[00000000]                    mov ESI, s1
+    43 00000036 BF[07000000]                    mov EDI, s2
+    44 0000003B 89CB                            mov EBX, ECX
+    45 0000003D B804000000                      mov EAX, l2
+    46                                          
+    47                                      
+    48                                      repeta:
+    49 00000042 A6                              cmpsb;comparing every element 
+    50 00000043 7E09                            jng just_loop
+    51 00000045 7D00                            jge change
+    52                                          change:;setting the higher value on rank `n`
+    53 00000047 4E                                  dec ESI
+    54 00000048 4F                                  dec EDI
+    55 00000049 A4                                  movsb
+    56 0000004A E2F6                                loop repeta
+    57 0000004C E304                                jecxz sf_prg
+    58                                          just_loop:;if it s not greater, it's just looping
+    59 0000004E E302                                jecxz sf_prg
+    60 00000050 E2F0                                loop repeta
+    61                                              
+    62                                          sf_prg:;filling with 1 and 0's
+    63 00000052 19D8                            sbb EAX, EBX
+    64 00000054 89C1                            mov ECX, EAX
+    65 00000056 49                              dec ECX
+    66 00000057 BA00000000                      mov EDX, 0
+    67 0000005C B001                            mov AL, 1
+    68 0000005E AA                              stosb
+    69                                          repeta1:
+    70 0000005F 4F                                dec EDI
+    71 00000060 8A07                              mov AL, [EDI]
+    72 00000062 47                                inc EDI
+    73 00000063 3C01                              cmp AL, 1
+    74 00000065 7402                              je este_1
+    75 00000067 7507                              jne este_0
+    76                                            este_1:
+    77 00000069 B000                                mov AL, 0
+    78 0000006B AA                                  stosb
+    79 0000006C E309                                jecxz final
+    80 0000006E E2EF                                loop repeta1
+    81                                            este_0:
+    82 00000070 B001                                mov AL, 1
+    83 00000072 AA                                  stosb
+    84 00000073 E302                                jecxz final
+    85 00000075 E2E8                                loop repeta1
+    86                                           
+    87                                              
+    88                                          final:;printing to screen
+    89 00000077 B807000000                          mov eax, l1
+    90 0000007C BB04000000                          mov ebx, l2
+    91 00000081 39D8                                cmp eax, ebx
+    92 00000083 730C                                jae primul
+    93 00000085 BB[07000000]                        mov ebx, s2
+    94 0000008A B904000000                          mov ecx, l2
+    95 0000008F EB0A                                jmp prePrintare
+    96                                              primul:
+    97 00000091 BB[00000000]                            mov ebx, s1
+    98 00000096 B907000000                              mov ecx, l1
+    99                                                  
+   100                                              prePrintare:
+   101 0000009B BE00000000                              mov esi, 0
+   102                                              printare:
+   103 000000A0 60                                      pushad
+   104 000000A1 8A0433                                  mov al, [ebx+esi]
+   105 000000A4 6698                                    cbw
+   106 000000A6 98                                      cwde
+   107 000000A7 50                                      push dword eax
+   108 000000A8 68[0B000000]                            push dword fmt
+   109 000000AD FF15[00000000]                          call [printf]
+   110 000000B3 83C408                                  add esp, 4*2
+   111 000000B6 61                                      popad
+   112 000000B7 46                                      inc esi
+   113 000000B8 E2E6                                    loop printare
+   114                                      
+   115 000000BA 6A00                            push    dword 0      
+   116 000000BC FF15[00000000]                  call    [exit]      

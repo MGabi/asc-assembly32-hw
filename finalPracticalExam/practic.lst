@@ -1,0 +1,161 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start        
+     4                                  
+     5                                  extern exit, scanf, printf, fopen, fprintf, fread, fclose, fwrite
+     6                                  import exit msvcrt.dll
+     7                                  import scanf msvcrt.dll
+     8                                  import printf msvcrt.dll
+     9                                  import fopen msvcrt.dll
+    10                                  import fprintf msvcrt.dll
+    11                                  import fread msvcrt.dll
+    12                                  import fclose msvcrt.dll
+    13                                  import fwrite msvcrt.dll
+    14                                  
+    15                                  segment data use32 class=data
+    16 00000000 257300                      fmt_s db "%s", 0
+    17 00000003 722B00                      access db "r+", 0
+    18 00000006 772B00                      access_w db "w+", 0
+    19 00000009 696E7075742E747874-         nume_fisier_in db "input.txt", 0
+    19 00000012 00                 
+    20 00000013 FFFFFFFF                    desc_fisier_in dd -1
+    21 00000017 FFFFFFFF                    desc_fisier_sec dd -1
+    22 0000001B 00<rept>                    nume_fisier_sec times 16 db 0
+    23                                      len equ 1
+    24 0000002B 00<rept>                    propozitie times 128 db 0
+    25 000000AB 00000000                    len_prop dd 0
+    26                                      
+    27                                      
+    28                                      
+    29                                  segment code use32 class=code
+    30                                      start:
+    31                                  
+    32                                      ;opening file
+    33 00000000 68[03000000]                push dword access
+    34 00000005 68[09000000]                push dword nume_fisier_in
+    35 0000000A FF15[00000000]              call [fopen]
+    36 00000010 83C408                      add esp, 4*2
+    37                                      
+    38 00000013 83F800                      cmp eax, 0
+    39                                      
+    40 00000016 0F8445010000                je close
+    41                                      
+    42 0000001C A3[13000000]                mov [desc_fisier_in], eax
+    43                                      
+    44                                      
+    45                                      citire_propozitii:
+    46                                          
+    47 00000021 C705[2B000000]0000-             mov dword [propozitie], 0
+    47 00000029 0000               
+    48 0000002B C705[2F000000]0000-             mov dword [propozitie+4], 0
+    48 00000033 0000               
+    49 00000035 C705[33000000]0000-             mov dword [propozitie+4*2], 0
+    49 0000003D 0000               
+    50 0000003F C705[37000000]0000-             mov dword [propozitie+4*3], 0
+    50 00000047 0000               
+    51 00000049 C705[3B000000]0000-             mov dword [propozitie+4*4], 0
+    51 00000051 0000               
+    52 00000053 C705[43000000]0000-             mov dword [propozitie+4*6], 0
+    52 0000005B 0000               
+    53 0000005D C705[AB000000]0000-             mov dword [len_prop], 0
+    53 00000065 0000               
+    54 00000067 BE00000000                      mov esi, 0
+    55                                          read_one:
+    56 0000006C 60                                  pushad
+    57                                              
+    58 0000006D B8[2B000000]                        mov eax, propozitie
+    59 00000072 01F0                                add eax, esi
+    60                                              
+    61 00000074 FF35[13000000]                      push dword [desc_fisier_in]
+    62 0000007A 6A01                                push dword len
+    63 0000007C 6A01                                push dword 1
+    64 0000007E 50                                  push dword eax
+    65 0000007F FF15[00000000]                      call [fread]
+    66 00000085 83C410                              add esp, 4*4
+    67                                              
+    68 00000088 83F800                              cmp eax, 0
+    69 0000008B 0F84C1000000                        je check_last
+    70                                              
+    71 00000091 80BE[2B000000]0A                    cmp byte [propozitie+esi], 10
+    72 00000098 7503                                jne not_new_line
+    73 0000009A 61                                  popad
+    74 0000009B 4E                                  dec esi
+    75 0000009C 60                                  pushad
+    76                                              not_new_line:
+    77                                              
+    78 0000009D 80BE[2B000000]2E                    cmp byte [propozitie+esi], '.'
+    79 000000A4 0F859C000000                        jne prop_not_done
+    80                                              
+    81                                              printare:
+    82 000000AA C686[2B000000]00                        mov byte [propozitie+esi], 0
+    83 000000B1 60                                      pushad
+    84                                                  
+    85 000000B2 BE00000000                              mov esi, 0
+    86 000000B7 C705[1B000000]0000-                     mov dword [nume_fisier_sec], 0
+    86 000000BF 0000               
+    87 000000C1 C705[1F000000]0000-                     mov dword [nume_fisier_sec+4], 0
+    87 000000C9 0000               
+    88 000000CB C705[23000000]0000-                     mov dword [nume_fisier_sec+4*2], 0
+    88 000000D3 0000               
+    89 000000D5 C705[27000000]0000-                     mov dword [nume_fisier_sec+4*3], 0
+    89 000000DD 0000               
+    90                                                  
+    91                                                  get_name:
+    92 000000DF 80BE[2B000000]20                            cmp byte [propozitie+esi], ' '
+    93 000000E6 7418                                        je name_done
+    94 000000E8 80BE[2B000000]00                            cmp byte [propozitie+esi], 0
+    95 000000EF 740F                                        je name_done
+    96 000000F1 8A86[2B000000]                              mov al, [propozitie+esi]
+    97 000000F7 8886[1B000000]                              mov [nume_fisier_sec+esi], al
+    98 000000FD 46                                          inc esi
+    99 000000FE EBDF                                        jmp get_name
+   100                                                      
+   101                                                  name_done:
+   102 00000100 68[06000000]                            push dword access_w
+   103 00000105 68[1B000000]                            push dword nume_fisier_sec
+   104 0000010A FF15[00000000]                          call [fopen]
+   105 00000110 83C408                                  add esp, 4*2
+   106                                                  
+   107 00000113 83F800                                  cmp eax, 0
+   108                                                  
+   109 00000116 7419                                    je close_sec
+   110                                                  
+   111 00000118 A3[17000000]                            mov [desc_fisier_sec], eax
+   112                                                  
+   113 0000011D 68[2B000000]                            push dword propozitie
+   114 00000122 FF35[17000000]                          push dword [desc_fisier_sec]
+   115 00000128 FF15[00000000]                          call [fprintf]
+   116 0000012E 83C408                                  add esp, 4*2
+   117                                                  
+   118                                                  close_sec:
+   119 00000131 FF35[17000000]                              push dword [desc_fisier_sec]
+   120 00000137 FF15[00000000]                              call [fclose]
+   121 0000013D 83C404                                      add esp, 4
+   122                                                      
+   123 00000140 E9DCFEFFFF                              jmp citire_propozitii
+   124 00000145 61                                      popad
+   125                                              
+   126                                              prop_not_done:
+   127                                              
+   128 00000146 61                                  popad
+   129 00000147 46                                  inc esi
+   130 00000148 E91FFFFFFF                          jmp read_one
+   131                                              
+   132                                          
+   133                                          cont_citire:
+   134                                          
+   135                                          
+   136                                          
+   137 0000014D E9CFFEFFFF                  jmp citire_propozitii
+   138                                      
+   139                                      
+   140                                      check_last:
+   141                                      
+   142                                      final:
+   143 00000152 FF35[13000000]                  push dword [desc_fisier_in]
+   144 00000158 FF15[00000000]                  call [fclose]
+   145 0000015E 83C404                          add esp, 4
+   146                                      
+   147                                      close:
+   148 00000161 6A00                            push dword 0
+   149 00000163 FF15[00000000]                  call [exit]

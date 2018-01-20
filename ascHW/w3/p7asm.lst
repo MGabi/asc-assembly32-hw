@@ -1,0 +1,84 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start        
+     4                                  
+     5                                  extern exit
+     6                                  import exit msvcrt.dll
+     7                                  
+     8                                  segment data use32 class=data
+     9 00000000 0500                        a dw 5
+    10 00000002 03                          b db 3
+    11 00000003 0800                        c dw 8
+    12 00000005 3C00000000000000            x dq 60
+    13                                  segment code use32 class=code
+    14                                      start:
+    15                                          ;x - (a*100 + b) / (b+c-1)
+    16                                          ;60 - (500 + 3) / (11 - 1)
+    17                                          ;60 - 503 / 10
+    18                                          ;60 - 50
+    19                                          ;10
+    20                                          
+    21                                          ;unsigned
+    22                                          ; mov DX, 0;          DX = 0 = 0h
+    23                                          ; mov AX, 100;        AX = 100 = 64h
+    24                                          ; mul word[a];        DX:AX = 500 = 1F4h
+    25                                          ; push DX;            DX on stack
+    26                                          ; push AX;            AX on stack
+    27                                          ; pop EBX;            EBX = 500 = 1F4h
+    28                                          ; mov EAX, 0;         EAX = 0 = 0h
+    29                                          ; mov AL, [b];        AL = 3 = 3h
+    30                                          ; add EBX, EAX;       EBX = 503 = 1F7h -> EBX = (a*100 + b)
+    31                                          
+    32                                          ; mov EAX, 0;         EAX = 0 = 0h
+    33                                          ; mov AL, [b];        AL = 3 = 3h
+    34                                          ; mov AH, 0;          AH = 0 = 0h
+    35                                          ; ;                   AX = 3 = 3h
+    36                                          ; add AX, [c];        AX = 11 = Bh
+    37                                          ; sub AX, 1;          AX = 10 = Ah
+    38                                          ; mov ECX, EAX;       ECX = 10 = 10h -> ECX = (b+c-1)
+    39                                          ; mov EAX, EBX;       EAX = 503 = 1F7h
+    40                                          ; mov EDX, 0;         EDX = 0 = 0h
+    41                                          ; idiv ECX;           EAX = 50 = 32h | EDX = 3 = 3h
+    42                                          ; mov EDX, 0;         EDX:EAX = 50 = 32h
+    43                                          ; mov EBX, 0;         EBX = 0 = 0h
+    44                                          ; mov ECX, 0;         ECX = 0 = 0h
+    45                                          ; mov EBX, dword[x];   EBX = 60 = 3Ch
+    46                                          ; mov ECX, [x+4];     ECX = 0 = 0h
+    47                                          ; ;                   ECX:EBX = 60 = 3Ch
+    48                                          ; sub EBX, EAX;       EBX = 10 = Ah
+    49                                          ; sbb ECX, EDX;       ECX = 0 = 0h
+    50                                          
+    51                                          ;signed
+    52 00000000 66B86400                        mov AX, 100;        AX = 100 = 64h
+    53 00000004 66F72D[00000000]                imul word[a];        DX:AX = 500 = 1F4h
+    54 0000000B 6652                            push DX;            DX on stack
+    55 0000000D 6650                            push AX;            AX on stack
+    56 0000000F 5B                              pop EBX;            EBX = 500 = 1F4h
+    57 00000010 A0[02000000]                    mov AL, [b];        AL = 3 = 3h
+    58 00000015 6698                            cbw;                AX = 3 = 3h
+    59 00000017 98                              cwde;               EAX = 3 = 3h
+    60 00000018 01C3                            add EBX, EAX;       EBX = 503 = 1F7h -> EBX = (a*100 + b)
+    61                                          
+    62 0000001A B800000000                      mov EAX, 0;         EAX = 0 = 0h
+    63 0000001F A0[02000000]                    mov AL, [b];        AL = 3 = 3h
+    64 00000024 6698                            cbw;                AX = 3 = 3h
+    65 00000026 660305[03000000]                add AX, [c];        AX = 11 = Bh
+    66 0000002D 6683E801                        sub AX, 1;          AX = 10 = Ah
+    67 00000031 98                              cwde;               EAX = 10 = AH
+    68 00000032 89C1                            mov ECX, EAX;       ECX = 10 = 10h -> ECX = (b+c-1)
+    69 00000034 89D8                            mov EAX, EBX;       EAX = 503 = 1F7h
+    70 00000036 99                              cdq;                EDX:EAX = 503 = 1F7h
+    71 00000037 F7F9                            idiv ECX;           EAX = 50 = 32h | EDX = 3 = 3h
+    72 00000039 99                              cdq;                EDX:EAX = 50 = 32h
+    73 0000003A BB00000000                      mov EBX, 0;         EBX = 0 = 0h
+    74 0000003F B900000000                      mov ECX, 0;         ECX = 0 = 0h
+    75 00000044 8B1D[05000000]                  mov EBX, dword[x];  EBX = 60 = 3Ch
+    76 0000004A 8B0D[09000000]                  mov ECX, [x+4];     ECX = 0 = 0h
+    77                                          ;                   ECX:EBX = 60 = 3Ch
+    78                                          ;                   EDX:EAX = 50 - 32h
+    79 00000050 29C3                            sub EBX, EAX;       EBX = 10 = Ah
+    80 00000052 19D1                            sbb ECX, EDX;       ECX = 0 = 0h
+    81                                          
+    82                                          
+    83 00000054 6A00                            push dword 0
+    84 00000056 FF15[00000000]                  call [exit]

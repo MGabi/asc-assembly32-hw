@@ -1,0 +1,84 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start        
+     4                                  
+     5                                  extern exit, printf
+     6                                  import exit msvcrt.dll
+     7                                  import printf msvcrt.dll
+     8                                  
+     9                                  segment data use32 class=data
+    10 00000000 120003000F00FF00            a dw 12h, 3h, 0fh, 0ffh
+    11 00000008 880A12                      d db 88h, 0Ah, 12h
+    12 0000000B 080005000300FCFFF8-         b dw 8, 5, 3, -4, -8
+    12 00000014 FF                 
+    13 00000015 FEA87305                    c dd 573A8FEh
+    14 00000019 00                          n db 0
+    15 0000001A 00                          m db 0
+    16 0000001B 4F63746574756C2064-         msj db "Octetul de pe pozitia M este: ", 0
+    16 00000024 6520706520706F7A69-
+    16 0000002D 746961204D20657374-
+    16 00000036 653A2000           
+    17 0000003A 25640A0D00                  fmt db "%d", 10, 13, 0
+    18 0000003F 25780A0D00                  fmt2 db "%x", 10, 13, 0
+    19 00000044 25730A0D                    fmts db "%s", 10, 13
+    20                                  
+    21                                  segment code use32 class=code
+    22                                      start:
+    23 00000000 B8F0000000                      mov eax, 00000000000000000000000011110000b
+    24 00000005 2305[15000000]                  and eax, [c]
+    25 0000000B A3[19000000]                    mov [n], eax; n = 1111 1000b
+    26 00000010 BB0000F000                      mov ebx, 00000000111100000000000000000000b
+    27 00000015 231D[15000000]                  and ebx, [c]
+    28 0000001B C1EB14                          shr ebx, 20; ebx = 0x0111b
+    29 0000001E D0E3                            shl bl, 1
+    30 00000020 081D[19000000]                  or [n], bl
+    31                                          
+    32 00000026 B000                            mov al, 0
+    33 00000028 A0[19000000]                    mov al, [n]; n = 1111 1110b
+    34 0000002D 6698                            cbw
+    35 0000002F 98                              cwde
+    36                                          
+    37 00000030 50                              push eax
+    38 00000031 68[3A000000]                    push fmt
+    39 00000036 FF15[00000000]                  call [printf]
+    40 0000003C 83C408                          add esp, 4*2
+    41                                          
+    42 0000003F A1[19000000]                    mov eax, [n]
+    43 00000044 A3[1A000000]                    mov [m], eax
+    44                                          
+    45 00000049 F615[1A000000]                  not byte[m]
+    46 0000004F 8005[1A000000]01                add byte[m], 1
+    47 00000056 8005[1A000000]02                add byte[m], 2
+    48 0000005D B800000000                      mov eax, 0
+    49 00000062 A0[1A000000]                    mov al, [m]
+    50 00000067 6698                            cbw
+    51 00000069 98                              cwde
+    52                                          
+    53 0000006A 50                              push dword eax
+    54 0000006B 68[3A000000]                    push fmt
+    55 00000070 FF15[00000000]                  call [printf]
+    56 00000076 83C408                          add esp, 4*2
+    57                                          
+    58 00000079 A1[1A000000]                    mov eax, [m]
+    59 0000007E 05[00000000]                    add eax, a
+    60                                          
+    61 00000083 8B18                            mov ebx, [eax]
+    62 00000085 83E30F                          and ebx, 00000000000000000000000000001111b
+    63 00000088 53                              push ebx
+    64                                          
+    65 00000089 68[3F000000]                    push fmt2
+    66 0000008E FF15[00000000]                  call [printf]
+    67 00000094 83C408                          add esp, 4*2
+    68                                          
+    69 00000097 B800000000                      mov eax, 0
+    70 0000009C BB00000000                      mov ebx, 0
+    71 000000A1 B900000000                      mov ecx, 0
+    72 000000A6 BA00000000                      mov edx, 0
+    73                                          
+    74 000000AB B919000000                      mov ecx, n-a
+    75 000000B0 BA00000000                      mov edx, 0
+    76                                          repeta:
+    77 000000B5 E2FE                            loop repeta
+    78                                          
+    79 000000B7 6A00                            push dword 0
+    80 000000B9 FF15[00000000]                  call [exit]

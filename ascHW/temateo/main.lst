@@ -1,0 +1,112 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  global s
+     5                                  global s1  
+     6                                  global rezultat      
+     7                                  
+     8                                  extern exit, printf, scanf
+     9                                  extern cautare
+    10                                  import exit msvcrt.dll
+    11                                  import printf msvcrt.dll
+    12                                  import scanf msvcrt.dll
+    13                                  
+    14                                  segment data use32 class=data
+    15 00000000 00<rept>                    s1 times 6 db 0
+    16 00000006 00<rept>                    s times 8 db 0
+    17 0000000E 05                          n db 5
+    18 0000000F FF                          rezultat db -1
+    19 00000010 256400                      prt_fmr db "%d", 0
+    20 00000013 257300                      scan_fmt db "%s", 0
+    21 00000016 496E74726F64756365-         prompt_sir db "Introduceti 5 siruri", 10, 13, 0
+    21 0000001F 746920352073697275-
+    21 00000028 72690A0D00         
+    22 0000002D 46616C73650A0D00            msg_false db "False", 10, 13, 0
+    23 00000035 547275650A0D00              msg_true db "True", 10, 13, 0
+    24 0000003C 00000000                    ecx_var dd 0
+    25                                      
+    26                                  segment code use32 class=code
+    27                                      start:
+    28                                  
+    29                                      
+    30 00000000 68[16000000]                push dword prompt_sir
+    31 00000005 FF15[00000000]              call [printf]
+    32 0000000B 83C404                      add esp, 4
+    33                                      
+    34 0000000E B900000000                  mov ECX, 0
+    35 00000013 8B0D[0E000000]              mov ECX, [n]
+    36 00000019 83E901                      sub ECX, 1
+    37                                      
+    38 0000001C 890D[3C000000]              mov [ecx_var], ECX
+    39                                      
+    40 00000022 60                          pushad
+    41 00000023 68[00000000]                push DWORD s1
+    42 00000028 68[13000000]                push DWORD scan_fmt
+    43 0000002D FF15[00000000]              call [scanf]
+    44 00000033 83C408                      add ESP, 4*2
+    45 00000036 61                          popad
+    46                                      bucla:
+    47                                          
+    48 00000037 60                              pushad
+    49 00000038 68[06000000]                    push DWORD s
+    50 0000003D 68[13000000]                    push DWORD scan_fmt
+    51 00000042 FF15[00000000]                  call [scanf]
+    52 00000048 83C408                          add ESP, 4*2
+    53 0000004B 61                              popad
+    54                                          
+    55 0000004C 6A06                            push DWORD 6
+    56 0000004E 6A08                            push DWORD 8
+    57 00000050 E8(00000000)                    call cautare
+    58 00000055 83C408                          add ESP, 4*2
+    59                                          
+    60 00000058 A0[0F000000]                    mov AL, [rezultat]
+    61 0000005D 3C01                            cmp AL, 1
+    62 0000005F 7402                            je print_true
+    63 00000061 EB12                            jmp print_false
+    64                                          print_true:
+    65 00000063 60                                  pushad
+    66 00000064 68[35000000]                        push DWORD msg_true
+    67 00000069 FF15[00000000]                      call [printf]
+    68 0000006F 83C404                              add ESP, 4*1
+    69 00000072 61                                  popad
+    70 00000073 EB10                                jmp final
+    71                                              
+    72                                          print_false:
+    73 00000075 60                                  pushad
+    74 00000076 68[2D000000]                        push DWORD msg_false
+    75 0000007B FF15[00000000]                      call [printf]
+    76 00000081 83C404                              add ESP, 4*1
+    77 00000084 61                                  popad
+    78                                          final:
+    79 00000085 B0FF                            mov AL, -1
+    80 00000087 A2[0F000000]                    mov [rezultat], AL
+    81 0000008C 8A0D[3C000000]                  mov CL, BYTE [ecx_var]
+    82 00000092 FEC9                            dec CL
+    83 00000094 80F900                          cmp CL, 0
+    84 00000097 7402                            je stop 
+    85 00000099 EB9C                            jmp bucla
+    86                                  
+    87                                      stop:
+    88                                  
+    89                                     ;push dword 3
+    90                                      ;push dword 4
+    91                                     ; call cautare
+    92                                      ;add esp, 4*2
+    93                                      
+    94                                     
+    95                                  
+    96                                  
+    97                                  
+    98                                  
+    99                                     ;mov AL, [rezultat]
+   100                                      ;cbw
+   101                                      ;cwde
+   102                                      
+   103                                      ;push DWORD EAX
+   104                                      ;push DWORD prt_fmr
+   105                                      ;call [printf]
+   106                                      ;add ESP, 4*2
+   107                                      
+   108 0000009B 6A00                        push dword 0
+   109 0000009D FF15[00000000]              call [exit]
+   110                                      

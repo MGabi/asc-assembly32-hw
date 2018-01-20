@@ -1,0 +1,67 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13 00000000 05                          a db 5
+    14 00000001 04                          b db 4
+    15 00000002 06                          c db 6
+    16 00000003 0A00                        d dw 10
+    17                                      
+    18                                  ; our code starts here
+    19                                  segment code use32 class=code
+    20                                      start:
+    21                                          ; 3 * [20*(b - a + 2) - 10 * c ] + 2 * ( d - 3 ) = 
+    22                                          ; = -106
+    23                                          
+    24 00000000 A0[01000000]                    mov AL, [b]
+    25 00000005 2A05[00000000]                  sub AL, [a]
+    26 0000000B 0402                            add AL, 2
+    27 0000000D B414                            mov AH, 20
+    28 0000000F F6E4                            mul AH
+    29                                          
+    30                                          ;AX = 20*(b-a+2)
+    31 00000011 6689C3                          mov BX, AX
+    32                                          ;BX = 20*(b-a+2)
+    33                                          ;AX will be 10*c
+    34 00000014 B00A                            mov AL, 10
+    35 00000016 8A25[02000000]                  mov AH, [c]
+    36 0000001C F6E4                            mul AH
+    37                                          
+    38                                          ;BX is here rez
+    39 0000001E 6629C3                          sub BX, AX
+    40                                          
+    41                                          ;have to do 3*rez
+    42                                          ;mov BX, AX
+    43 00000021 66B80300                        mov AX, 3
+    44 00000025 66F7E3                          mul BX
+    45                                          ;DX:AX is now 3*[20*(b-a+2)-10*c]
+    46                                          ;DX:AX = -180
+    47 00000028 6652                            push DX
+    48 0000002A 6650                            push AX
+    49                                          
+    50                                          ;bigger paranthesis is now on the stack
+    51 0000002C 66A1[03000000]                  mov AX, [d]
+    52 00000032 6683E803                        sub AX, 3
+    53 00000036 66BB0200                        mov BX, 2
+    54 0000003A 66F7E3                          mul BX
+    55                                          ;DX:AX is now 2*(d-3)
+    56                                          
+    57 0000003D 6652                            push DX
+    58 0000003F 6650                            push AX
+    59 00000041 58                              pop EAX
+    60                                          ;EAX is now little paranthesis
+    61 00000042 5B                              pop EBX
+    62                                          ;ebx is now bigger paranthesis
+    63                                          
+    64 00000043 01C3                            add EBX, EAX
+    65                                          ; exit(0)
+    66 00000045 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    67 00000047 FF15[00000000]                  call    [exit]       ; call exit to terminate the program
